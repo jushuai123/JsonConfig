@@ -17,11 +17,8 @@ bool UJsonConfigLibrary2::LoadConfig(TSharedPtr<FJsonObject>& Config)
 		{
 			Config = MakeShareable(new FJsonObject);
 			TSharedRef<TJsonReader<TCHAR>> Reader = TJsonReaderFactory<TCHAR>::Create(FileAr);
-			if (FJsonSerializer::Deserialize(Reader, Config))
-			{
-				Valid = true;
-			}
-			else
+			Valid = FJsonSerializer::Deserialize(Reader, Config);
+			if (!Valid)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("FileAr cant Deserialize, %s"), *FileAr);
 			}
@@ -86,14 +83,9 @@ bool UJsonConfigLibrary2::SetPawnSpeed(float InSpeed)
 	if (!Valid)
 	{
 		Config = MakeShareable(new FJsonObject);
-		Config->SetNumberField(TEXT("PawnSpeed"), InSpeed);
-		Valid = SaveEmptyConfig(Config);
 	}
-	else
-	{
-		Config->SetNumberField(TEXT("PawnSpeed"), InSpeed);
-		Valid = SaveConfig(Config);
-	}
+	Config->SetNumberField(TEXT("PawnSpeed"), InSpeed);
+	Valid = SaveConfig(Config);
 
 	return Valid;
 }
