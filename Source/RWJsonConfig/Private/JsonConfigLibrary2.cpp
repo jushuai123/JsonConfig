@@ -101,9 +101,103 @@ float UJsonConfigLibrary2::GetPawnSpeed(bool& Valid)
 		Valid = LoadConfig(Config);
 		if (Valid)
 		{
-			InSpeed = Config->GetNumberField(TEXT("PawnSpeed"));
+			Valid = Config->HasField(TEXT("PawnSpeed"));
+			if (Valid)
+			{
+				InSpeed = Config->GetNumberField(TEXT("PawnSpeed"));
+			}
 		}
 	}
 
 	return InSpeed;
+}
+
+bool UJsonConfigLibrary2::SetLineColor(FString Key, FColor InColor)
+{
+	bool Valid = false;
+
+	TSharedPtr<FJsonObject> Config;
+	if (FPaths::FileExists(GetJsonConfigPath()))
+	{
+		Valid = LoadConfig(Config);
+	}
+	if (!Valid)
+	{
+		Config = MakeShareable(new FJsonObject);
+	}
+
+	TSharedPtr<FJsonObject> LineColor;
+	if (Config->HasField(TEXT("LineColor")))
+	{
+		LineColor = Config->GetObjectField(TEXT("LineColor"));
+	}
+	else
+	{
+		LineColor = MakeShareable(new FJsonObject);
+	}
+	
+	TSharedPtr<FJsonObject> Color = MakeShareable(new FJsonObject);
+	float R = InColor.R;
+	float G = InColor.G;
+	float B = InColor.B;
+	float A = InColor.A;
+	Color->SetNumberField(TEXT("R"), R);
+	Color->SetNumberField(TEXT("G"), G);
+	Color->SetNumberField(TEXT("B"), B);
+	Color->SetNumberField(TEXT("A"), A);
+	LineColor->SetObjectField(Key, Color);
+
+	Config->SetObjectField(TEXT("LineColor"), LineColor);
+	Valid = SaveConfig(Config);
+
+	return Valid;
+}
+
+FLinearColor UJsonConfigLibrary2::GetLineColor(FString Key, bool& Valid)
+{
+	Valid = false;
+	FColor OutColor;
+	uint8 R = 0;
+	uint8 G = 0;
+	uint8 B = 0;
+	uint8 A = 0;
+
+	if (FPaths::FileExists(GetJsonConfigPath()))
+	{
+		TSharedPtr<FJsonObject> Config;
+		Valid = LoadConfig(Config);
+		if (Valid)
+		{
+			Valid = Config->HasField(TEXT("LineColor"));
+			TSharedPtr<FJsonObject> LineColor;
+			if (Valid)
+			{
+				LineColor = Config->GetObjectField(TEXT("LineColor"));
+				Valid = LineColor->HasField(Key);
+				if(Valid)
+				{
+					TSharedPtr<FJsonObject> Color;
+					Color = LineColor->GetObjectField(Key);
+					R = Color->GetNumberField(TEXT("R"));
+					G = Color->GetNumberField(TEXT("G"));
+					B = Color->GetNumberField(TEXT("B"));
+					A = Color->GetNumberField(TEXT("A"));
+				}
+			}
+		}
+	}
+	OutColor = FColor(R, G, B, A);
+
+	return FLinearColor(OutColor);
+}
+
+FLinearColor UJsonConfigLibrary2::ColorToLinearColor(FColor Incolor)
+{
+	return FLinearColor(Incolor);
+}
+
+FLinearColor UJsonConfigLibrary2::HexToLinearColor(FString HexString)
+{
+	FColor Color = FColor::FromHex(HexString);
+	return FLinearColor(Color);
 }
